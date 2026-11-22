@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 function tmpDir(prefix = 'cj-test-') {
-  return fs.realpathSync(fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), prefix))));
+  return fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
 
 /** Raw request: nothing normalizes the path or headers. */
