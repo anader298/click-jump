@@ -45,9 +45,10 @@ const PAGE = `<!doctype html>
 
 const lineOf = (needle) => PAGE.slice(0, PAGE.indexOf(needle)).split('\n').length;
 
-// CJ_REAL_CHROME=1 runs the same checks in the installed Google Chrome, with a throwaway profile.
-const engines = process.env.CJ_REAL_CHROME
-  ? { 'google-chrome': { launch: (options) => chromium.launch({ ...options, channel: 'chrome' }) } }
+// CJ_CHANNEL=chrome or msedge runs the same checks in that installed browser, with a throwaway profile.
+const channel = process.env.CJ_CHANNEL;
+const engines = channel
+  ? { [channel]: { launch: (options) => chromium.launch({ ...options, channel }) } }
   : { chromium, firefox, webkit };
 
 for (const [name, engine] of Object.entries(engines)) {

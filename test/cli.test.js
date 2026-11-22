@@ -171,7 +171,9 @@ test('no arguments: finds index.html, serves it, stops on SIGINT', async (t) => 
   assert.strictEqual(url.hostname, '127.0.0.1');
   assert.ok((await request(url.port, { path: url.pathname })).body.toString().includes('<h1 data-cj="index.html:1:1"'));
   s.child.kill('SIGINT');
-  assert.strictEqual((await s.exited).code, 0);
+  const { code } = await s.exited;
+  // Windows has no signals between processes: kill() ends the child without an exit code.
+  if (process.platform !== 'win32') assert.strictEqual(code, 0);
   await assert.rejects(request(url.port, { path: '/' }));
 });
 

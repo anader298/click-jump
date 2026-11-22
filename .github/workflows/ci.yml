@@ -23,16 +23,24 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:unit
       - run: npm run test:cli
+        if: ${{ !cancelled() }}
       - run: npm run test:e2e
+        if: ${{ !cancelled() }}
+      - name: Microsoft Edge (Windows)
+        if: ${{ !cancelled() && runner.os == 'Windows' }}
+        run: node --test --test-concurrency=1 test/e2e.test.js
+        env:
+          CJ_CHANNEL: msedge
       - name: Vim follows clicks (needs a pty)
-        if: runner.os != 'Windows'
+        if: ${{ !cancelled() && runner.os != 'Windows' }}
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then sudo apt-get update && sudo apt-get install -y vim; fi
           npm run test:vim
       - name: VS Code integration (Linux)
-        if: runner.os == 'Linux'
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
         run: xvfb-run -a npm run test:vscode
       - name: VS Code integration (macOS, Windows)
-        if: runner.os != 'Linux'
+        if: ${{ !cancelled() && runner.os != 'Linux' }}
         run: npm run test:vscode
       - run: npm run build:vsix
+        if: ${{ !cancelled() }}

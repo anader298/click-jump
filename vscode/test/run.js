@@ -53,6 +53,21 @@ function hideMacCopy(exe) {
   }
 }
 
+// Linux and Windows: same hidden-window shim, so real clicks can be driven in CI.
+function patchOtherCopy(exe, cache) {
+  if (!exe.startsWith(cache)) throw new Error(`refusing to patch a VS Code outside the cache: ${exe}`);
+  const base = path.dirname(exe);
+  const dirs = [base, ...fs.readdirSync(base, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path.join(base, d.name))];
+  const appDir = dirs.map((d) => path.join(d, 'resources', 'app')).find((d) => fs.existsSync(path.join(d, 'out', 'main.js')));
+  if (!appDir) throw new Error('could not find VS Code main.js');
+  const main = path.join(appDir, 'out', 'main.js');
+  fs.copyFileSync(path.join(__dirname, 'hidden-electron.mjs'), path.join(appDir, 'out', 'cj-electron.mjs'));
+  let code = fs.readFileSync(main, 'utf8');
+  code = code.replaceAll('from"electron"', 'from"./cj-electron.mjs"').replaceAll('import("electron")', 'import("./cj-electron.mjs")');
+  fs.writeFileSync(main, code);
+  if (!code.includes('./cj-electron.mjs') || code.includes('from"electron"')) throw new Error('could not verify the patch');
+}
+
 async function main() {
   if (!process.env.CJ_EXT_PATH) require('../../scripts/sync-core');
   for (const key of Object.keys(process.env)) {
@@ -78,6 +93,7 @@ async function main() {
     console.log('SKIPPED: no DISPLAY. Run under xvfb-run.');
     return SKIP;
   }
+  if (process.platform !== 'darwin') patchOtherCopy(exe, fs.realpathSync(CACHE));
 
   // A hung instance must not outlive the run. The path is unique to the temp copy.
   let timedOut = false;

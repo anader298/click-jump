@@ -32,7 +32,7 @@
     "test:e2e": "node --test --test-concurrency=1 test/e2e.test.js",
     "test:vim": "python3 test/vim_pty.py",
     "test:vscode": "node vscode/test/run.js",
-    "test:chrome": "CJ_REAL_CHROME=1 node --test --test-concurrency=1 test/e2e.test.js",
+    "test:chrome": "CJ_CHANNEL=chrome node --test --test-concurrency=1 test/e2e.test.js",
     "test:safari": "node test/safari_tab.js",
     "test:safari:hands": "node test/safari_hands.js",
     "test:safari:driver": "node test/safari_real.js",
