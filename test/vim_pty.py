@@ -90,6 +90,9 @@ def wait_value(s, cwd, expr, want, secs=4):
         time.sleep(0.05)
     return got
 
+# Vim's own bracket highlighter also adds matches, so count only the flash.
+FLASHES = "len(filter(getmatches(), {_, m -> m.group ==# 'ClickJumpFlash'}))"
+
 def main():
     cwd = os.path.realpath(tempfile.mkdtemp(prefix="cj-vim-"))
     second = "we ird 'name' \"q\" café.html"
@@ -108,9 +111,9 @@ def main():
 
         check("jump accepted", jump(url, token, "index.html:3:1") == 204)
         check("cursor on line 3", wait_value(s, cwd, "line('.')", "3") == "3")
-        check("flash match present", wait_value(s, cwd, "len(getmatches())", "1") == "1")
+        check("flash match present", wait_value(s, cwd, FLASHES, "1") == "1")
         check("flash group is ClickJumpFlash", "ClickJumpFlash" in s.query(cwd, "string(getmatches())"))
-        check("flash clears by itself", wait_value(s, cwd, "len(getmatches())", "0", 3) == "0")
+        check("flash clears by itself", wait_value(s, cwd, FLASHES, "0", 3) == "0")
 
         loc = re.search(r'<b data-cj="([^"]+)"', page).group(1)
         jump(url, token, loc)
@@ -124,7 +127,7 @@ def main():
 
         from urllib.parse import quote
         s.send("\x1b:call setline(1, getline(1))\r")   # leave an unsaved change
-        s.pump(0.2)
+        wait_value(s, cwd, "&modified", "1")
         jump(url, token, quote(second, safe="") + ":2:1")
         check("follows into a second file with a hostile name",
               wait_value(s, cwd, "expand('%:t')", second) == second, s.query(cwd, "expand('%:t')"))
