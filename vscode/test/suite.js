@@ -47,10 +47,12 @@ const lineOf = (file, needle) => {
   return text.slice(0, text.indexOf(needle)).split('\n').length;
 };
 
+// VS Code reports Integrated Browser tabs with no input type.
+const browserTabs = () => vscode.window.tabGroups.all.flatMap((g) => g.tabs).filter((t) => t.input === undefined);
+
 function previewVisible(column) {
-  const group = vscode.window.tabGroups.all.find((g) => g.viewColumn === column);
-  const tab = group && group.activeTab;
-  return !!tab && tab.input instanceof vscode.TabInputWebview && tab.input.viewType.includes('clickJump.preview');
+  const tab = vscode.window.tabGroups.all.find((g) => g.viewColumn === column)?.activeTab;
+  return !!tab && tab.input === undefined;
 }
 
 async function run() {
@@ -101,11 +103,10 @@ async function run() {
     port = r.port;
     frame = `127.0.0.1:${port}`;
     assert.strictEqual(api._state().running, true);
-    await until(() => api._state().previewColumn === vscode.ViewColumn.Two, 'preview in column two');
     await until(() => previewVisible(vscode.ViewColumn.Two), 'preview tab active');
   });
 
-  await step('the real preview iframe loads the instrumented page', async () => {
+  await step('the Integrated Browser loads the instrumented page', async () => {
     await until(async () => (await control({ op: 'frames' })).some((u) => u.includes(frame)), 'preview frame');
     await until(() => control({ op: 'eval', part: frame, code: `!!window.__clickJumpLoaded && !!document.querySelector('h1[data-cj]')` }), 'client loaded');
   });
@@ -165,8 +166,7 @@ async function run() {
     await vscode.commands.executeCommand('clickJump.open', vscode.Uri.file(index));
     assert.strictEqual(api._state().port, port);
     await until(() => control({ op: 'eval', part: frame, code: `location.pathname === '/index.html' && !!window.__clickJumpLoaded` }), 'back on index');
-    const panels = vscode.window.tabGroups.all.flatMap((g) => g.tabs).filter((t) => t.input instanceof vscode.TabInputWebview);
-    assert.strictEqual(panels.length, 1);
+    assert.strictEqual(browserTabs().length, 1);
   });
 
   await step('source is byte-identical before any edit', () => {
@@ -205,8 +205,7 @@ async function run() {
       vscode.commands.executeCommand('clickJump.open', vscode.Uri.file(index)),
     ]);
     assert.strictEqual(a.port, b.port);
-    const panels = vscode.window.tabGroups.all.flatMap((g) => g.tabs).filter((t) => t.input instanceof vscode.TabInputWebview);
-    assert.strictEqual(panels.length, 1);
+    assert.strictEqual(browserTabs().length, 1);
     await until(() => control({ op: 'eval', part: frame, code: `location.pathname === '/index.html' && !!window.__clickJumpLoaded` }), 'index loaded');
   });
 
@@ -216,6 +215,11 @@ async function run() {
       await vscode.commands.executeCommand('workbench.action.closeSidebar');
       await vscode.commands.executeCommand('notifications.clearAll');
       await sleep(500);
+      await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(index), vscode.ViewColumn.One);
+      await sleep(400);
+      const icon = await control({ op: 'eval', part: 'workbench', code: `(() => { const b = document.querySelector('.editor-group-container.active a[aria-label*="Open in Click Jump"]').getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; })()` });
+      fs.writeFileSync(path.join(SHOTS, 'icon.json'), JSON.stringify(icon));
+      await control({ op: 'capture', file: path.join(SHOTS, 'button-raw.png') });
       const dir = path.join(SHOTS, 'frames');
       fs.mkdirSync(dir, { recursive: true });
       let n = 0;
@@ -273,6 +277,18 @@ async function run() {
       await until(() => sha(index) === before, 'demo source restored');
     });
   }
+
+  await step('hiding the browser tab keeps the server running', async () => {
+    const group = vscode.window.tabGroups.all.find((g) => g.viewColumn === vscode.ViewColumn.Two);
+    await vscode.commands.executeCommand('workbench.action.focusSecondEditorGroup');
+    await vscode.commands.executeCommand('workbench.action.toggleEditorGroupLock').then(() => 0, () => 0);
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(menu), { viewColumn: vscode.ViewColumn.Two, preview: false });
+    await sleep(6000);
+    assert.strictEqual(api._state().running, true);
+    const textTab = group.tabs.find((t) => t.input instanceof vscode.TabInputText);
+    await vscode.window.tabGroups.close(textTab);
+    await until(() => previewVisible(vscode.ViewColumn.Two), 'browser tab back');
+  });
 
   await step('closing the preview stops the server', async () => {
     const group = vscode.window.tabGroups.all.find((g) => g.viewColumn === vscode.ViewColumn.Two);

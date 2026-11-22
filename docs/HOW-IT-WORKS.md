@@ -16,7 +16,7 @@ Click Jump has one shared core and two front ends. The core is plain Node with n
  +-----------------------------------+                              |
      ^                  |                                           v
      |                  | onJump(file, line, col)        +---------------------+
-     |                  v                                |  browser or webview |
+     |                  v                                |  browser            |
      |     +--------------------------+                  |                     |
      |     | VS Code extension        |                  |  client.js          |
      |     |   reveal line, flash     |                  |  Option+click       |
@@ -35,7 +35,7 @@ Click Jump has one shared core and two front ends. The core is plain Node with n
 | `src/core/server.js` | Serves files, checks requests, watches for changes |
 | `src/core/client.js` | Runs in the page and handles Option+click |
 | `src/cli/` | The `click-jump` command and the Vim script |
-| `vscode/src/extension.js` | Button, preview panel, jump and flash |
+| `vscode/src/extension.js` | Button, Integrated Browser, jump and flash |
 
 ## Instrumentation
 
@@ -76,7 +76,7 @@ Safari treats Option+click on a link as a download, and the default action can c
 
 ### Why the preview doesn't get covered
 
-The extension looks up which editor group holds the preview from the live tab list and always reveals code in a different one. It talks to the server in-process, so there's no `vscode://` link and no security prompt.
+The preview runs in VS Code's Integrated Browser, which isn't a text editor, so the extension reveals code only in text editor columns and can't cover it. When the last page disconnects for 4 seconds, the tab is treated as closed and the server stops. The extension talks to the server in-process, so there's no `vscode://` link and no security prompt.
 
 ## Live reload
 

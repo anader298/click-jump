@@ -111,12 +111,15 @@ async function walkSignature(root, signal) {
  * @param {number} [o.watchIntervalMs]
  * @param {(msg:string)=>void} [o.log]
  */
+const IDLE_MS = 4000;
+
 async function startServer(o) {
   const realRoot = await fsp.realpath(o.root);
   const token = crypto.randomBytes(24).toString('base64url');
   const frameAncestors = o.frameAncestors || "'self'";
   const log = o.log || (() => {});
   const clients = new Set();
+  let idleTimer = null;
   let port = 0;
   let version = crypto.randomBytes(6).toString('hex');
   const clientTag = `<script src="/__cj/client.js" data-cj-client data-cj-token="${token}"></script>`;
@@ -213,7 +216,12 @@ async function startServer(o) {
     res.writeHead(200, baseHeaders({ 'Content-Type': 'text/event-stream', Connection: 'keep-alive' }));
     res.write(`event: hello\ndata: ${version}\n\n`);
     clients.add(res);
-    req.on('close', () => clients.delete(res));
+    clearTimeout(idleTimer);
+    req.on('close', () => {
+      clients.delete(res);
+      // A reload reconnects within the grace period; a closed tab does not.
+      if (o.onIdle && !clients.size && !signal.stopped) idleTimer = setTimeout(o.onIdle, IDLE_MS);
+    });
     return undefined;
   }
 
@@ -388,6 +396,7 @@ async function startServer(o) {
     signal.stopped = true;
     clearTimeout(timer);
     clearInterval(heartbeat);
+    clearTimeout(idleTimer);
     for (const c of clients) c.end();
     clients.clear();
     closed = new Promise((resolve) => {
@@ -406,6 +415,11 @@ async function startServer(o) {
     urlFor(file) {
       const rel = path.relative(realRoot, fs.realpathSync(file)).split(path.sep);
       return `http://${HOST}:${port}/${rel.map(encodeURIComponent).join('/')}`;
+    },
+    /** Sends open pages to this URL. Returns false if no page is connected. */
+    navigate(url) {
+      for (const c of clients) c.write(`event: navigate\ndata: ${url}\n\n`);
+      return clients.size > 0;
     },
     close,
   };

@@ -1,6 +1,6 @@
 # The story
 
-I was building landing pages quickly and presenting them to leadership, including my CEO. The building wasn't the slow part. The slow part came after the feedback, when one comment about one line on the screen meant stopping to find that line in the code, changing it and reloading the page.
+I often use HTML files as a quick way to show data, results, tools and landing pages to leadership. Feedback comes while everyone is looking at the page, so I had to make changes on the spot and keep the workshop clean for a non-technical room. I couldn't find an easy, simple tool for editing and saving HTML live, so I made one. It had to be simple, light and something I didn't have to justify. Building the pages wasn't the slow part. The slow part came after the feedback, when one comment about one line on the screen meant stopping to find that line in the code, changing it and reloading the page.
 
 Here's the kind of change that made it worth building. One landing page had a track-record section with nine deal cards in a grid. In the code, each card was one long line, and all nine looked almost identical. During a live review, my CEO asked for a change to the fourth card. Finding it meant scanning those lines while everyone waited. With Click Jump, I hold Option, click the card and land on line 374, highlighted and ready to edit. I make the change, save, and we both see it on the page.
 
@@ -48,6 +48,10 @@ Safari got the most attention because it treats Option+click on a link as "downl
 
 It also refuses clicks that come from a script, so a web page can't fire jumps on its own. That protection meant no script could prove the most important gesture in Safari. The automated checks cover loading, hover, live reload and the connection to the server, and the last check is a person holding Option and clicking twice.
 
+## Going native
+
+The first extension drew its own preview panel. Once I looked closely at VS Code's Integrated Browser, the panel had no reason to exist. Switching to the built-in browser cut the extension from 220 lines to 137 and gave the preview a real address bar.
+
 ## What's still open
 
-Click Jump has been tested on macOS. Windows and Linux are supported in the code and have automated checks set up, but those checks haven't run yet. It maps plain HTML, so React, Vue and template engines are out of scope. The [limits](TESTING.md#known-limits) are written down so you can decide if it fits before you install it.
+Click Jump has been tested by hand on a Mac in VS Code. I don't own a Windows computer, so Windows relies on automated checks, and the VS Code checks on Windows and Linux aren't confirmed yet. It maps plain HTML, so React, Vue and template engines are out of scope. The [limits](TESTING.md#known-limits) are written down so you can decide if it fits before you install it.

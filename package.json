@@ -1,6 +1,6 @@
 {
   "name": "click-jump",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Option+click anything in a live HTML preview to jump to its source line. VS Code extension and zero-dependency CLI.",
   "license": "MIT",
   "author": "Anthony Nader",

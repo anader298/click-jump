@@ -1,50 +1,70 @@
 # Click Jump
 
-I built Click Jump because I was shipping landing pages quickly and presenting them to leadership, including my CEO. Building the pages was fast. Making changes from their feedback was not, because every comment was about something on the screen and the fix was buried somewhere in a file.
+**Hold Option, click anything on a web page, and VS Code jumps to the exact line of code.** Change it, save, and the page updates.
+
+![Option+click a heading in the preview, the editor jumps to its line and flashes it, the edit is saved and the preview updates](docs/media/click-jump-demo.gif)
+
+## Why I built it
+
+I often use HTML files as a quick way to show data, results, tools and landing pages to leadership. Feedback comes while everyone is looking at the page, so I had to make changes on the spot and keep the workshop clean for a non-technical room. I couldn't find an easy, simple tool for editing and saving HTML live, so I made one. It had to be simple, light and something I didn't have to justify.
 
 Here's the kind of change that made it worth building. One landing page had a track-record section with nine deal cards in a grid. In the code, each card was one long line, and all nine looked almost identical. During a live review, my CEO asked for a change to the fourth card. Finding it meant scanning those lines while everyone waited. With Click Jump, I hold Option, click the card and land on line 374, highlighted and ready to edit. I make the change, save, and we both see it on the page.
 
 That changes how a review works. We workshop the page together in the meeting instead of going through constant rounds of turning comments.
 
-You may know the instinct: right-click, Inspect Element, change the text and see how it looks. But Inspect only edits the browser's copy, so the change disappears on refresh.
+You may know the instinct: right-click, Inspect Element, change the text and see how it looks. But Inspect only edits the browser's copy, so the change disappears on refresh. Click Jump makes that instinct real by taking you to the line in your actual file.
 
-Click Jump makes that instinct real. Hold Option, click anything on the page, and your editor lands on the exact line that made it. Change it, save, and the page refreshes.
+## Try it in 2 minutes
 
-![Option+click a heading in the preview, the editor jumps to its line and flashes it, the edit is saved and the preview updates](docs/media/click-jump-demo.gif)
+You need [VS Code](https://code.visualstudio.com/) 1.138 or newer. Click Jump uses VS Code's built-in browser, so there's nothing else to install.
 
-*Captured from a real VS Code 1.138 running the extension on the fictional bakery site in [`demo/`](demo/).*
+**1. Download** [the extension](https://github.com/anader298/click-jump/releases/latest/download/click-jump.vsix) and [the demo website](https://github.com/anader298/click-jump/archive/refs/heads/main.zip). Unzip the demo.
 
-It works on plain HTML, with no build step and no config. Your files are never rewritten: the line markers exist only in the copy sent to the browser.
+**2. Install it.** In VS Code, press `Cmd+Shift+P` (`Ctrl+Shift+P` on Windows), type `Install from VSIX`, press Enter and choose `click-jump.vsix`.
 
-## Install
+**3. Open an HTML file.** Go to **File > Open Folder**, choose the `demo` folder, then click `index.html`. If VS Code asks whether you trust the folder, choose **Yes**.
 
-**For VS Code**, paste this once:
+**4. Click the Click Jump icon** at the top right of the code. The website opens beside it. If you don't see the icon, click once in your code.
+
+![An orange label reading Open in Click Jump points to the icon at the top right of the VS Code editor](docs/media/click-jump-button.png)
+
+**5. Hold Option and click anything on the website** (Alt on Windows). The code jumps to that line and flashes yellow.
+
+**6. Change the text and press `Cmd+S`** (`Ctrl+S` on Windows). The website updates by itself.
+
+![VS Code with code on the left and its Integrated Browser on the right, line 36 flashing yellow after clicking the Cardamom bun heading](docs/media/vscode-real.png)
+
+## How it works
+
+A small local server adds a hidden line number to every tag in the copy of the page it sends to VS Code's Integrated Browser. When you Option+click, the page sends that location back and the editor jumps there. Your files are never rewritten by the preview.
+
+It's free, works on plain HTML with no build step or config, and has no runtime dependencies. The VS Code extension itself is 137 lines, on top of a small shared core.
+
+## Other ways to use it
+
+### 1. VS Code from a terminal
+
+On a Mac:
 
 ```sh
 curl -fsSLO https://github.com/anader298/click-jump/releases/latest/download/click-jump.vsix && code --install-extension click-jump.vsix
 ```
 
-**For Terminal with Safari or Chrome**, paste this once (needs Node 20 or newer):
+On Windows, in PowerShell:
+
+```powershell
+curl.exe -fsSLO https://github.com/anader298/click-jump/releases/latest/download/click-jump.vsix; code --install-extension click-jump.vsix
+```
+
+### 2. Mac Terminal and Safari
+
+Install the command once (needs Node 20 or newer):
 
 ```sh
 npm install --global github:anader298/click-jump
 ```
 
-## Three ways to use it
-
-### 1. VS Code with a live preview
-
-This is the main path, and you don't type any commands after the install.
-
-Open any HTML file and press the **Click Jump** button in the editor title bar. You can also right-click the file or run **Click Jump: Open Live Preview** from the Command Palette. The preview opens beside your code. Hold Option (Alt on Windows and Linux) and click.
-
-![VS Code with code on the left and the live preview on the right, line 36 flashing yellow after clicking the Cardamom bun heading](docs/media/vscode-real.png)
-
-*A real capture from an isolated VS Code instance.*
-
-### 2. Mac Terminal and Safari
-
-From any folder with an `index.html`:
+Then, from any folder with an `index.html`:
 
 ```sh
 click-jump --safari              # clicks open in your editor
@@ -78,7 +98,9 @@ The yellow flash happens in the VS Code extension and in `--terminal` Vim. With 
 
 ## Status
 
-Results from the last full run on macOS (Intel), Node 26.3, on 21 November 2026.
+**Tested by hand on a Mac in VS Code.** I don't own a Windows computer, so Windows support is checked by automated tests on GitHub's Windows machines and hasn't been tested by hand.
+
+Results from macOS (Intel), Node 26.3, on 22 November 2026.
 
 | Suite | Result |
 | --- | --- |
@@ -86,18 +108,16 @@ Results from the last full run on macOS (Intel), Node 26.3, on 21 November 2026.
 | CLI | 21 of 21 passed |
 | Browser end to end (headless Chromium, Firefox, WebKit) | 87 of 87 passed |
 | Installed Google Chrome 158 | 29 of 29 passed |
-| Installed Safari 18 | 7 of 7 passed, plus a real Option+click check |
 | Vim in a real pseudo-terminal | 16 of 16 passed |
-| Packaged `.vsix` in an isolated VS Code 1.138.0 | 20 of 20 passed |
+| Extension in an isolated VS Code 1.138.0 | 21 of 21 passed |
+| Installed Safari 18 | 7 of 7 passed (real Option+clicks last checked on version 0.1.0) |
 
 | Platform | Status |
 | --- | --- |
-| macOS, VS Code | Tested |
-| macOS, Chromium, Firefox and WebKit engines | Tested headless |
-| Safari 18 on macOS | Tested: 7 automated checks plus real Option+clicks by hand |
-| Google Chrome 158 on macOS | Tested |
-| Windows | **Untested.** A CI workflow is included but has not run |
-| Linux | **Untested.** A CI workflow is included but has not run |
+| macOS, VS Code Integrated Browser | Tested by hand and automatically |
+| Safari and Chrome on macOS | Tested |
+| Windows | Core, CLI and browser tests passed, including Edge. **VS Code not confirmed yet** |
+| Linux | Core, CLI, browser and Vim tests passed. **VS Code not confirmed yet** |
 
 ## What it can't do
 
@@ -105,6 +125,7 @@ Results from the last full run on macOS (Intel), Node 26.3, on 21 November 2026.
 - Elements created by JavaScript jump to their nearest parent that exists in the HTML file.
 - A page with a strict Content-Security-Policy can block the injected script.
 - Remote workspaces (SSH, containers, Codespaces) are not supported.
+- The extension needs VS Code 1.138 or newer, because it uses the Integrated Browser.
 
 The full list is in [docs/TESTING.md](docs/TESTING.md#known-limits).
 

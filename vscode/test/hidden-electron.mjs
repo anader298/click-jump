@@ -66,13 +66,25 @@ function mainContents() {
 }
 
 function frames(win) { return win.webContents.mainFrame.framesInSubtree; }
-function findFrame(win, part) {
-  const f = frames(win).find((x) => x.url.includes(part));
-  if (!f) throw new Error(`no frame matching ${part}`);
-  return f;
+
+const captured = new WeakSet();
+
+// The Integrated Browser is its own web contents; the fallback panel is an iframe.
+function findTarget(part) {
+  const win = mainContents();
+  const frame = frames(win).find((x) => x.url.includes(part));
+  if (frame) return { contents: win.webContents, frame };
+  const view = electron.webContents.getAllWebContents().find((c) => !c.isDestroyed() && c.getURL().includes(part));
+  if (!view) throw new Error(`no page matching ${part}`);
+  // In a hidden window a freshly navigated view stops taking input unless it counts as captured.
+  if (!captured.has(view)) {
+    captured.add(view);
+    view.incrementCapturerCount({ width: 800, height: 800 }, true, true);
+  }
+  return { contents: view, frame: view.mainFrame };
 }
 
-// Sums iframe offsets from the workbench down to the target frame.
+// Sums iframe offsets from the top of the web contents down to the target frame.
 async function frameOffset(frame) {
   let x = 0;
   let y = 0;
@@ -89,47 +101,72 @@ async function frameOffset(frame) {
   return { x, y };
 }
 
+// A fresh attach each time: after a navigation a hidden view drops input sent on the old session.
+async function debuggerFor(contents) {
+  const dbg = contents.debugger;
+  if (dbg.isAttached()) dbg.detach();
+  dbg.attach('1.3');
+  await dbg.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: true });
+  return dbg;
+}
+
 const ops = {
-  frames: async () => frames(mainContents()).map((f) => f.url),
+  frames: async () => [
+    ...frames(mainContents()).map((f) => f.url),
+    ...electron.webContents.getAllWebContents().filter((c) => !c.isDestroyed()).map((c) => c.getURL()),
+  ],
   state: async () => electron.BrowserWindow.getAllWindows().map((w) => ({ visible: w.isVisible(), focused: w.isFocused() })),
   blocked: async () => shown.length,
-  eval: async ({ part, code }) => findFrame(mainContents(), part).executeJavaScript(code),
+  eval: async ({ part, code }) => findTarget(part).frame.executeJavaScript(code),
   altClick: async ({ part, selector, alt = true }) => {
-    const win = mainContents();
-    const frame = findFrame(win, part);
+    const { contents, frame } = findTarget(part);
     const box = await frame.executeJavaScript(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); e.scrollIntoView({block:'center'}); const b = e.getBoundingClientRect(); return { x: b.left + Math.min(b.width / 2, 40), y: b.top + b.height / 2 }; })()`);
     const off = await frameOffset(frame);
     const x = Math.round(box.x + off.x);
     const y = Math.round(box.y + off.y);
     // DevTools input reaches hidden windows and produces trusted events.
-    const dbg = win.webContents.debugger;
-    if (!dbg.isAttached()) dbg.attach('1.3');
+    const dbg = await debuggerFor(contents);
     const modifiers = alt ? 1 : 0;
     const send = (type, extra = {}) => dbg.sendCommand('Input.dispatchMouseEvent', { type, x, y, modifiers, ...extra });
-    await send('mouseMoved');
-    await new Promise((r) => setTimeout(r, 60));
-    await send('mousePressed', { button: 'left', buttons: 1, clickCount: 1 });
-    await new Promise((r) => setTimeout(r, 30));
-    await send('mouseReleased', { button: 'left', buttons: 0, clickCount: 1 });
-    await new Promise((r) => setTimeout(r, 80));
+    // A hidden view can drop input while it wakes up. Undelivered presses are safe to resend.
+    await frame.executeJavaScript(`window.__cjPressed = 0; addEventListener('mousedown', () => { window.__cjPressed++; }, { capture: true, once: true }); 1`);
+    for (let tries = 0; tries < 12; tries++) {
+      await send('mouseMoved');
+      await new Promise((r) => setTimeout(r, 60));
+      await send('mousePressed', { button: 'left', buttons: 1, clickCount: 1 });
+      await new Promise((r) => setTimeout(r, 30));
+      await send('mouseReleased', { button: 'left', buttons: 0, clickCount: 1 });
+      await new Promise((r) => setTimeout(r, 120));
+      if (await frame.executeJavaScript('window.__cjPressed')) break;
+      await new Promise((r) => setTimeout(r, 250));
+    }
     return { x, y };
   },
   hover: async ({ part, selector, alt = true }) => {
-    const win = mainContents();
-    const frame = findFrame(win, part);
+    const { contents, frame } = findTarget(part);
     const box = await frame.executeJavaScript(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); const b = e.getBoundingClientRect(); return { x: b.left + Math.min(b.width / 2, 40), y: b.top + b.height / 2 }; })()`);
     const off = await frameOffset(frame);
-    const dbg = win.webContents.debugger;
-    if (!dbg.isAttached()) dbg.attach('1.3');
-    await dbg.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x: Math.round(box.x + off.x), y: Math.round(box.y + off.y), modifiers: alt ? 1 : 0 });
+    await (await debuggerFor(contents)).sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x: Math.round(box.x + off.x), y: Math.round(box.y + off.y), modifiers: alt ? 1 : 0 });
     return true;
   },
+  // The browser is a native view that page captures leave out, so its pixels are laid over the workbench.
   capture: async ({ file }) => {
-    const img = await mainContents().webContents.capturePage(undefined, { stayHidden: true, stayAwake: true });
+    const win = mainContents();
+    const view = win.contentView.children.find((v) => v.webContents?.getURL().startsWith('http://127.0.0.1') && v.getVisible());
+    if (view) {
+      const shot = (await view.webContents.capturePage(undefined, { stayHidden: true, stayAwake: true })).toDataURL();
+      const b = view.getBounds();
+      await win.webContents.executeJavaScript(`new Promise((done) => {
+        const i = new Image(); i.id = 'cj-shot'; i.onload = done;
+        i.style = 'position:fixed;z-index:99999;left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px';
+        i.src = ${JSON.stringify(shot)}; document.body.append(i);
+      }).then(() => new Promise(requestAnimationFrame)).then(() => 1)`);
+    }
+    const img = await win.webContents.capturePage(undefined, { stayHidden: true, stayAwake: true });
+    if (view) await win.webContents.executeJavaScript(`document.getElementById('cj-shot').remove(); 1`);
     const png = img.toPNG();
     fs.writeFileSync(file, png);
-    const size = img.getSize();
-    return { bytes: png.length, ...size };
+    return { bytes: png.length, ...img.getSize() };
   },
 };
 

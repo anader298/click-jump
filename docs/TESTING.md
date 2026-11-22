@@ -2,7 +2,7 @@
 
 ## Last full run
 
-macOS (Intel), Node 26.3.0, npm 11.16, Vim 9.0, 21 November 2026.
+macOS (Intel), Node 26.3.0, npm 11.16, Vim 9.0, 22 November 2026. Real Option+clicks in Safari were last checked on version 0.1.0.
 
 | Suite | Command | Result |
 | --- | --- | --- |
@@ -13,9 +13,9 @@ macOS (Intel), Node 26.3.0, npm 11.16, Vim 9.0, 21 November 2026.
 | Installed Google Chrome 158 | `npm run test:chrome` | 29 passed, 0 failed |
 | Installed Safari 18.0.1 | `npm run test:safari` | 7 passed, 0 failed |
 | Real Option+clicks in Safari | `npm run test:safari:hands` | Passed |
-| VS Code integration, packaged `.vsix` | `npm run test:vscode` | 20 passed, 0 failed |
+| VS Code integration, packaged `.vsix` | `npm run test:vscode` | 21 passed, 0 failed |
 
-The browser count is 28 checks in each of 3 engines, plus one parent test per engine. The VS Code count includes the step that captures the demo frames, which only runs when `CJ_SHOTS` is set.
+The browser count is 28 checks in each of 3 engines, plus one parent test per engine. A 22nd VS Code step captures the demo frames when `CJ_SHOTS` is set.
 
 ## What each suite covers
 
@@ -27,7 +27,7 @@ The browser count is 28 checks in each of 3 engines, plus one parent test per en
 
 **Vim.** Runs `click-jump --terminal` in a real pseudo-terminal with no user config. It checks the cursor line and column, the flash appearing and clearing, a second file with a hostile name, that unsaved work is kept, and that the server stops when Vim quits.
 
-**VS Code.** Runs the packaged extension in VS Code 1.138.0 with its own user data and extensions folders. Clicks are real, trusted input events inside the actual webview. It checks the jump, the flash decoration, that the preview stays visible, multiple files, reload on save, that unsaved edits aren't written, and clean stop.
+**VS Code.** Runs the packaged extension in VS Code 1.138.0 with its own user data and extensions folders. Clicks are real, trusted input events inside VS Code's real Integrated Browser. It checks the jump, the flash decoration, that the preview stays visible, multiple files, reload on save, that unsaved edits aren't written, and clean stop.
 
 On macOS the test harness patches a throwaway copy of VS Code in the temp folder so its windows stay hidden. It won't launch if that patch can't be verified.
 
@@ -41,7 +41,7 @@ On macOS the test harness patches a throwaway copy of VS Code in the temp folder
 ## What has not been verified
 
 - **Real Safari.** Covered on Safari 18.0.1. `npm run test:safari` runs 7 checks in a normal tab with no settings changed. Scripts cannot fake an Option+click, so `npm run test:safari:hands` waits for two real clicks.
-- **Windows and Linux.** Code paths exist and some are unit tested, but nothing has run on those systems. The GitHub Actions workflow in `.github/workflows/ci.yml` has not run yet.
+- **Windows and Linux.** GitHub Actions passed the core, CLI and browser suites on both, including Edge on Windows and Vim on Linux. The VS Code checks failed there on version 0.1.0 and have not been confirmed since. Neither has been tested by hand.
 - **VS Code versions other than 1.138.0**, and forks such as Cursor and Windsurf.
 - **Editors other than VS Code and Vim** as real launches. Their command lines are unit tested.
 

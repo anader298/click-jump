@@ -207,6 +207,7 @@
       version = e.data;
     });
     es.addEventListener('reload', function () { location.reload(); });
+    es.addEventListener('navigate', function (e) { if (e.data !== location.href.split('#')[0]) location.href = e.data; });
     window.addEventListener('pagehide', function () { es.close(); });
   }
   connect();
