@@ -1,0 +1,47 @@
+{
+  "name": "click-jump",
+  "version": "0.1.0",
+  "description": "Option+click anything in a live HTML preview to jump to its source line. VS Code extension and zero-dependency CLI.",
+  "license": "MIT",
+  "author": "Anthony Nader",
+  "keywords": [
+    "html",
+    "live-preview",
+    "click-to-source",
+    "live-reload",
+    "vscode",
+    "vim",
+    "safari"
+  ],
+  "bin": {
+    "click-jump": "bin/click-jump.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "npm run test:unit && npm run test:cli && npm run test:e2e && npm run test:vim",
+    "test:unit": "node --test test/tokenizer.test.js test/instrument.test.js test/server.test.js",
+    "test:cli": "node --test test/cli.test.js",
+    "test:e2e": "node --test --test-concurrency=1 test/e2e.test.js",
+    "test:vim": "python3 test/vim_pty.py",
+    "test:vscode": "node vscode/test/run.js",
+    "test:chrome": "CJ_REAL_CHROME=1 node --test --test-concurrency=1 test/e2e.test.js",
+    "test:safari": "node test/safari_tab.js",
+    "test:safari:hands": "node test/safari_hands.js",
+    "test:safari:driver": "node test/safari_real.js",
+    "build:vsix": "node scripts/build-vsix.js"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.1.1",
+    "parse5": "^8.1.1",
+    "playwright": "1.65.1"
+  }
+}

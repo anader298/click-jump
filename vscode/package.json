@@ -1,0 +1,38 @@
+{
+  "name": "click-jump",
+  "displayName": "Click Jump",
+  "description": "Option+click anything in a live HTML preview to jump to its source line. Save and the page refreshes.",
+  "version": "0.1.0",
+  "publisher": "click-jump",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "keywords": ["html", "preview", "live reload", "click to source", "inspect"],
+  "main": "./src/extension.js",
+  "extensionKind": ["workspace"],
+  "capabilities": {
+    "virtualWorkspaces": { "supported": false, "description": "Click Jump serves files from the local disk." },
+    "untrustedWorkspaces": { "supported": false, "description": "Click Jump runs the page's scripts in a preview." }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "clickJump.open", "title": "Open Live Preview", "shortTitle": "Click Jump", "category": "Click Jump", "icon": "$(inspect)" },
+      { "command": "clickJump.stop", "title": "Stop Preview", "category": "Click Jump", "icon": "$(debug-stop)" }
+    ],
+    "menus": {
+      "editor/title": [
+        { "command": "clickJump.open", "when": "resourceExtname =~ /^\\.html?$/i", "group": "navigation" }
+      ],
+      "editor/context": [
+        { "command": "clickJump.open", "when": "resourceExtname =~ /^\\.html?$/i", "group": "navigation" }
+      ],
+      "explorer/context": [
+        { "command": "clickJump.open", "when": "resourceExtname =~ /^\\.html?$/i", "group": "navigation" }
+      ],
+      "commandPalette": [
+        { "command": "clickJump.stop", "when": "clickJump.running" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:unit
+      - run: npm run test:cli
+      - run: npm run test:e2e
+      - name: Vim follows clicks (needs a pty)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then sudo apt-get update && sudo apt-get install -y vim; fi
+          npm run test:vim
+      - name: VS Code integration (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:vscode
+      - name: VS Code integration (macOS, Windows)
+        if: runner.os != 'Linux'
+        run: npm run test:vscode
+      - run: npm run build:vsix
