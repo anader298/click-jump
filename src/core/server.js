@@ -413,7 +413,7 @@ async function startServer(o) {
     origin: `http://${HOST}:${port}`,
     /** URL for a file inside root. */
     urlFor(file) {
-      const rel = path.relative(realRoot, fs.realpathSync(file)).split(path.sep);
+      const rel = path.relative(realRoot, fs.realpathSync.native(file)).split(path.sep);
       return `http://${HOST}:${port}/${rel.map(encodeURIComponent).join('/')}`;
     },
     /** Sends open pages to this URL. Returns false if no page is connected. */

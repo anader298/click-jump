@@ -40,9 +40,9 @@ async function jumpTo({ file, line, col }) {
 
 function rootFor(file) {
   const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(file));
-  const realFile = fs.realpathSync(file);
+  const realFile = fs.realpathSync.native(file);
   if (folder?.uri.scheme === 'file') {
-    const real = fs.realpathSync(folder.uri.fsPath);
+    const real = fs.realpathSync.native(folder.uri.fsPath);
     // Dot-folders are not served, so a page under one gets its own root.
     const hidden = path.relative(real, realFile).split(path.sep).some((s) => s.startsWith('.'));
     if (isInside(real, realFile) && !hidden) return real;
