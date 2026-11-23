@@ -24,11 +24,13 @@ function flashLine(editor, line) {
 }
 
 async function jumpTo({ file, line, col }) {
-  const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+  // Reuse the open tab even if VS Code knows the file by a short name or symlink.
+  const isFile = (d) => d.uri.scheme === 'file' && fs.existsSync(d.uri.fsPath) && fs.realpathSync.native(d.uri.fsPath) === file;
+  const doc = vscode.workspace.textDocuments.find(isFile) ?? await vscode.workspace.openTextDocument(vscode.Uri.file(file));
   const pos = doc.validatePosition(new vscode.Position(Math.max(line - 1, 0), Math.max(col - 1, 0)));
   // The browser is not a text editor, so these columns can never cover it.
   const code = vscode.window.visibleTextEditors.filter((e) => e.viewColumn);
-  const target = code.find((e) => e.document.uri.fsPath === file) ?? code[0];
+  const target = code.find((e) => e.document === doc) ?? code[0];
   const editor = await vscode.window.showTextDocument(doc, {
     viewColumn: target?.viewColumn ?? vscode.ViewColumn.Beside,
     preview: false,

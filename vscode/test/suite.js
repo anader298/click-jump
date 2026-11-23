@@ -42,6 +42,8 @@ async function until(fn, what, ms = 15000) {
   }
 }
 
+const samePath = (a, b) => fs.realpathSync.native(a) === fs.realpathSync.native(b);
+
 const lineOf = (file, needle) => {
   const text = fs.readFileSync(file, 'utf8');
   return text.slice(0, text.indexOf(needle)).split('\n').length;
@@ -122,7 +124,7 @@ async function run() {
     await control({ op: 'altClick', part: frame, selector: '.card:nth-child(2) h2' });
     const want = lineOf(index, 'Cardamom bun') - 1;
     await until(() => vscode.window.activeTextEditor?.selection.active.line === want, `cursor on line ${want + 1}`);
-    assert.strictEqual(vscode.window.activeTextEditor.document.uri.fsPath, index);
+    assert.ok(samePath(vscode.window.activeTextEditor.document.uri.fsPath, index));
   });
 
   await step('the flash decoration applies in the code column', async () => {
@@ -156,7 +158,7 @@ async function run() {
     await control({ op: 'eval', part: frame, code: `location.href = '/menu/index.html'; 1` }).catch(() => {});
     await until(() => control({ op: 'eval', part: frame, code: `location.pathname === '/menu/index.html' && !!window.__clickJumpLoaded` }), 'menu page');
     await control({ op: 'altClick', part: frame, selector: 'li:nth-child(3)' });
-    await until(() => vscode.window.activeTextEditor?.document.uri.fsPath === menu, 'menu file opened');
+    await until(() => vscode.window.activeTextEditor && samePath(vscode.window.activeTextEditor.document.uri.fsPath, menu), 'menu file opened');
     await until(() => vscode.window.activeTextEditor.selection.active.line === lineOf(menu, 'Cardamom bun') - 1, 'menu line');
     assert.strictEqual(vscode.window.activeTextEditor.viewColumn, vscode.ViewColumn.One);
     assert.ok(previewVisible(vscode.ViewColumn.Two));
