@@ -54,4 +54,4 @@ The first extension drew its own preview panel. Once I looked closely at VS Code
 
 ## What's still open
 
-Click Jump has been tested by hand on a Mac in VS Code. I don't own a Windows computer, so Windows relies on automated checks, and the VS Code checks on Windows and Linux aren't confirmed yet. It maps plain HTML, so React, Vue and template engines are out of scope. The [limits](TESTING.md#known-limits) are written down so you can decide if it fits before you install it.
+Click Jump has been tested by hand on a Mac in VS Code. I don't own a Windows computer, so Windows relies on automated checks, and the VS Code checks there aren't confirmed yet. They pass on Linux. It maps plain HTML, so React, Vue and template engines are out of scope. The [limits](TESTING.md#known-limits) are written down so you can decide if it fits before you install it.

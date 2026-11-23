@@ -41,7 +41,7 @@ On macOS the test harness patches a throwaway copy of VS Code in the temp folder
 ## What has not been verified
 
 - **Real Safari.** Covered on Safari 18.0.1. `npm run test:safari` runs 7 checks in a normal tab with no settings changed. Scripts cannot fake an Option+click, so `npm run test:safari:hands` waits for two real clicks.
-- **Windows and Linux.** GitHub Actions passed the core, CLI and browser suites on both, including Edge on Windows and Vim on Linux. The VS Code checks failed there on version 0.1.0 and have not been confirmed since. Neither has been tested by hand.
+- **Windows and Linux.** GitHub Actions passed the core, CLI and browser suites on both, including Edge on Windows and Vim on Linux. The VS Code checks passed on Linux and are not confirmed on Windows. Neither has been tested by hand.
 - **VS Code versions other than 1.138.0**, and forks such as Cursor and Windsurf.
 - **Editors other than VS Code and Vim** as real launches. Their command lines are unit tested.
 

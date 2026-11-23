@@ -38,6 +38,10 @@ You need [VS Code](https://code.visualstudio.com/) 1.138 or newer. Click Jump us
 
 A small local server adds a hidden line number to every tag in the copy of the page it sends to VS Code's Integrated Browser. When you Option+click, the page sends that location back and the editor jumps there. Your files are never rewritten by the preview.
 
+![The demo site in a browser with Option held, showing a blue outline and an index.html:24 label on the menu button](docs/media/browser-hover.png)
+
+*Hold Option to see which file and line each element comes from.*
+
 It's free, works on plain HTML with no build step or config, and has no runtime dependencies. The VS Code extension itself is 137 lines, on top of a small shared core.
 
 ## Other ways to use it
@@ -94,11 +98,9 @@ click-jump setup                  # read-only check of what it found on your mac
 
 The yellow flash happens in the VS Code extension and in `--terminal` Vim. With `--editor`, the editor jumps to the line but does not flash.
 
-![The demo site in a browser with Option held, showing a blue outline and an index.html:24 label on the menu button](docs/media/browser-hover.png)
-
 ## Status
 
-**Tested by hand on a Mac in VS Code.** I don't own a Windows computer, so Windows support is checked by automated tests on GitHub's Windows machines and hasn't been tested by hand.
+**Tested by hand on a Mac in VS Code.** I don't own a Windows computer, so I haven't tested it by hand on Windows. Automated tests run on GitHub's Windows machines, and VS Code support there isn't confirmed yet.
 
 Results from macOS (Intel), Node 26.3, on 22 November 2026.
 
@@ -117,7 +119,7 @@ Results from macOS (Intel), Node 26.3, on 22 November 2026.
 | macOS, VS Code Integrated Browser | Tested by hand and automatically |
 | Safari and Chrome on macOS | Tested |
 | Windows | Core, CLI and browser tests passed, including Edge. **VS Code not confirmed yet** |
-| Linux | Core, CLI, browser and Vim tests passed. **VS Code not confirmed yet** |
+| Linux | Core, CLI, browser, Vim and VS Code automated tests passed |
 
 ## What it can't do
 

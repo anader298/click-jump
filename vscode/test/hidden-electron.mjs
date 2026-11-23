@@ -79,7 +79,7 @@ function findTarget(part) {
   // In a hidden window a freshly navigated view stops taking input unless it counts as captured.
   if (!captured.has(view)) {
     captured.add(view);
-    view.incrementCapturerCount({ width: 800, height: 800 }, true, true);
+    view.incrementCapturerCount?.({ width: 800, height: 800 }, true, true);
   }
   return { contents: view, frame: view.mainFrame };
 }
